@@ -22,7 +22,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.9'
+          flutter-version: '3.4.0'  # specify the Flutter version you want
 
       - name: Flutter doctor
         run: flutter doctor
