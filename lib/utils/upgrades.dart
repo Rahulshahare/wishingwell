@@ -13,10 +13,11 @@ class UpgradeManager {
 
   UpgradeManager() {
     // Load persisted state at start‑up
-    GamePersistence.load().then((tuple) {
-      _coins = tuple.coins;
-      capacity = tuple.capacity;
-      ropeLength = tuple.ropeLength;
+    GamePersistence.load().then((record) {
+      final (coins, cap, rope) = record;
+      _coins = coins;
+      capacity = cap;
+      ropeLength = rope;
     });
   }
 

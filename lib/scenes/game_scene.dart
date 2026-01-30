@@ -5,7 +5,6 @@ import '../components/rock_spawner.dart';
 import '../components/coin_spawner.dart';
 import '../components/hud.dart';
 import '../utils/upgrades.dart';
-import 'game_over.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -17,41 +16,41 @@ class GameScene extends FlameGame {
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(360, 690); // initial canvas size
+    camera.viewport.size = Vector2(360, 690);
 
     // Background
     final bgSprite = await Sprite.load('background.png');
-    add(SpriteComponent(
+    world.add(SpriteComponent(
       sprite: bgSprite,
-      size: size,
+      size: camera.viewport.size,
       position: Vector2.zero,
     ));
 
     // HUD
     final hud = HUDComponent(upgradeManager: upgradeManager);
-    hud.keyName = 'hud';
-    add(hud);
+    hud.key = ComponentKey.named('hud');
+    world.add(hud);
 
     // Bucket (player)
     final bucket = BucketComponent(upgradeManager: upgradeManager);
-    add(bucket);
+    world.add(bucket);
 
     // Rocks & Coins
     final rockSpawner = RockSpawner(bucket: bucket);
-    add(rockSpawner);
+    world.add(rockSpawner);
     final coinSpawner = CoinSpawner(bucket: bucket);
-    add(coinSpawner);
+    world.add(coinSpawner);
   }
 
   void _onUpgrade() async {
     // When capacity or rope length changes, increase well height by 5 m.
     _wellHeight += 5;
     // Adjust world size (the well area) – we simply enlarge the canvas height.
-    size = Vector2(size.x, size.y + 100);
+    camera.viewport.size = Vector2(camera.viewport.size.x, camera.viewport.size.y + 100);
     // Re-position bucket to stay anchored at the new bottom.
-    final bucket = children.whereType<BucketComponent>().firstOrNull;
+    final bucket = world.children.whereType<BucketComponent>().firstOrNull;
     if (bucket != null) {
-      bucket.position = Vector2(bucket.position.x, size.y - bucket.size.y);
+      bucket.position = Vector2(bucket.position.x, camera.viewport.size.y - bucket.size.y);
     }
   }
 
@@ -64,7 +63,7 @@ class GameScene extends FlameGame {
     overlays.remove('gameOver');
     resumeEngine();
     // Reset game state
-    removeAll(children);
+    world.removeAll(world.children);
     onLoad();
   }
 }

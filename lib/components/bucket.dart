@@ -10,8 +10,6 @@ import 'dart:math';
 class BucketComponent extends SpriteComponent
     with HasGameRef<GameScene>, DragCallbacks {
   final UpgradeManager upgradeManager;
-  late ParticleEffect _collectEffect;
-  late ParticleEffect _hitEffect;
 
   double _currentX = 0;
   int baseCapacity = 5;
@@ -24,22 +22,8 @@ class BucketComponent extends SpriteComponent
     sprite = await Sprite.load('bucket.png');
     size = Vector2(50, 70);
     anchor = Anchor.bottomCenter;
-    position = Vector2(gameRef.size.x / 2, gameRef.size.y);
+    position = Vector2(gameRef.camera.viewport.size.x / 2, gameRef.camera.viewport.size.y);
     _currentX = position.x;
-
-    // Initialize particle effects
-    _collectEffect = ParticleEffect(
-      particleCount: 12,
-      color: Colors.yellow,
-      duration: 0.5,
-      speed: 200,
-    );
-    _hitEffect = ParticleEffect(
-      particleCount: 8,
-      color: Colors.redAccent,
-      duration: 0.6,
-      speed: 150,
-    );
   }
 
   // ---------- movement ----------
@@ -51,20 +35,22 @@ class BucketComponent extends SpriteComponent
   }
 
   void _moveRight() {
-    final maxX = gameRef.size.x - width;
+    final gameWidth = gameRef.camera.viewport.size.x;
+    final maxX = gameWidth - width;
     _currentX = (_currentX + 30).clamp(0.0, maxX);
     position.x = _currentX;
   }
 
   void _moveLeft() {
-    _currentX = (_currentX - 30).clamp(0.0, gameRef.size.x - width);
+    final gameWidth = gameRef.camera.viewport.size.x;
+    _currentX = (_currentX - 30).clamp(0.0, gameWidth - width);
     position.x = _currentX;
   }
 
   // ---------- coin collection ----------
   void collectCoin(int coinValue) {
-    // Update HUD score
-    final hud = gameRef.findByKeyName<HUDComponent>('hud');
+    // Update HUD score - find HUD in parent's children
+    final hud = parent?.children.whereType<HUDComponent>().firstOrNull;
     hud?.updateScore(runCoins: coinValue);
 
     // Play particle burst
@@ -74,7 +60,7 @@ class BucketComponent extends SpriteComponent
       duration: 0.5,
     );
     effect.position = position.clone();
-    gameRef.add(effect);
+    parent?.add(effect);
 
     debugPrint('Collected $coinValue coins');
   }
@@ -88,7 +74,7 @@ class BucketComponent extends SpriteComponent
       duration: 0.6,
     );
     effect.position = position.clone();
-    gameRef.add(effect);
+    parent?.add(effect);
 
     // Save coins to persistence and show Game Over overlay
     await upgradeManager.saveLater();

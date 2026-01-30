@@ -53,7 +53,7 @@ class HUDComponent extends PositionComponent {
   }
 }
 
-class UpgradeButton extends PositionComponent with TapCallbacks {
+class UpgradeButton extends PositionComponent with TapCallbacks, HasGameRef {
   final String type;
   final UpgradeManager upgradeManager;
   static DateTime? _lastTapTime;
@@ -90,7 +90,7 @@ class UpgradeButton extends PositionComponent with TapCallbacks {
   }
 
   @override
-  void onTapDown(TapDownEvent event) {
+  void onTapDown(TapDownInfo info) {
     final now = DateTime.now();
     if (_lastTapTime != null &&
         now.difference(_lastTapTime!).inSeconds < _cooldownSeconds) {
