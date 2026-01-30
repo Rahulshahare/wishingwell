@@ -1,7 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame/geometry.dart';
 import 'package:flame/particles.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/collisions.dart';
@@ -61,7 +60,7 @@ class _GameWithOverlayState extends State<GameWithOverlay> {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Text(
@@ -93,7 +92,7 @@ class _GameWithOverlayState extends State<GameWithOverlay> {
 class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection {
   late Bucket bucket;
   double depth = 0;
-  double maxDepth = 800;       // starting rope length (pixels ≈ meters)
+  double maxDepth = 800;
   int bucketCapacity = 8;
   int totalCoins = 0;
   int currentRunCoins = 0;
@@ -114,16 +113,13 @@ class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection 
 
     // Load parallax background (cave layers)
     parallax = await loadParallaxComponent(
-    [
-      ParallaxImageData('cave_layer1.png'),
-      ParallaxImageData('cave_layer2.png'),
-      ParallaxImageData('cave_layer3.png'),
-    ],
-    baseVelocity: Vector2(0, 30),
-    velocityMultiplierDelta: Vector2(1.2, 1.5),
-    repeat: ImageRepeat.repeatX,
-    alignment: Alignment.topLeft,
-    size: size,
+      [
+        ParallaxImageData('cave_layer1.png'),
+        ParallaxImageData('cave_layer2.png'),
+        ParallaxImageData('cave_layer3.png'),
+      ],
+      baseVelocity: Vector2(0, 30),
+      velocityMultiplierDelta: Vector2(1.2, 1.5),
     );
     add(parallax);
 
@@ -156,16 +152,16 @@ class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection 
   void update(double dt) {
     super.update(dt);
 
-    if (showFailOverlay) return; // pause logic during fail screen
+    if (showFailOverlay) return;
 
     if (isDescending) {
       depth += 180 * dt;
-      parallax.parallax?.baseVelocity.y = 180; // sync parallax with descent
+      parallax.parallax?.baseVelocity.y = 180;
       if (depth >= maxDepth) {
         isDescending = false;
       }
     } else {
-      depth -= 250 * dt; // faster ascent
+      depth -= 250 * dt;
       parallax.parallax?.baseVelocity.y = -250;
       if (depth <= 0) {
         _finishRun(success: true);
@@ -181,7 +177,7 @@ class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection 
   void _finishRun({required bool success}) {
     if (success) {
       totalCoins += currentRunCoins;
-      final prefs = SharedPreferences.getInstance().then((p) => p.setInt('totalCoins', totalCoins));
+      SharedPreferences.getInstance().then((p) => p.setInt('totalCoins', totalCoins));
       onTotalCoinsChanged?.call(totalCoins);
     }
     currentRunCoins = 0;
@@ -236,7 +232,7 @@ class Bucket extends SpriteComponent with CollisionCallbacks {
     if (other is GoldCoin) {
       if (collected < game.bucketCapacity) {
         collected++;
-        final value = 10 + (game.depth ~/ 80).clamp(0, 50); // more value deeper
+        final value = 10 + (game.depth ~/ 80).clamp(0, 50);
         game.currentRunCoins += value;
         FlameAudio.play('collect.mp3');
         other.showCollectEffect(game);
@@ -244,12 +240,15 @@ class Bucket extends SpriteComponent with CollisionCallbacks {
       }
     } else if (other is Rock) {
       game.triggerFail();
-      other.removeFromParent(); // optional
+      other.removeFromParent();
     }
   }
 }
 
-abstract class Collectible extends SpriteComponent with CollisionCallbacks {}
+// Fixed: Added constructor to forward parameters to SpriteComponent
+abstract class Collectible extends SpriteComponent with CollisionCallbacks {
+  Collectible({super.position, super.size, super.anchor});
+}
 
 class GoldCoin extends Collectible {
   GoldCoin({required Vector2 position})
@@ -273,7 +272,7 @@ class GoldCoin extends Collectible {
           position: Vector2.zero(),
           child: CircleParticle(
             radius: 4.0 + random.nextDouble() * 5.0,
-            paint: Paint()..color = Colors.yellow.withOpacity(0.9),
+            paint: Paint()..color = Colors.yellow.withValues(alpha: 0.9),
           ),
         ),
       ),
