@@ -1,11 +1,12 @@
 import 'package:flame/components.dart';
 import 'bucket.dart';
 import 'dart:math';
+import '../components/particle_effects.dart';
 
 class CoinSpawner extends PositionedComponent {
   final BucketComponent bucket;
   static const double coinSize = 32;
-  static const double coinSpeed = 100; // downward speed
+  static const double coinSpeed = 100;
 
   CoinSpawner({required this.bucket});
 
@@ -13,42 +14,40 @@ class CoinSpawner extends PositionedComponent {
   Future<void> onLoad() async {
     sprite = await Sprite.load('assets/coin.png');
     size = Vector2(coinSize, coinSize);
-    // Random spawn horizontally within bucket width
-    position = Vector2(
-        Random().nextDouble() * (bucket.currentX * 2), -height);
+    // Random spawn horizontally; for demo we just use bucket.x +/- 50
+    position = Vector2(bucket.position.x + Random().nextDouble() * 100 - 50, -height);
     priority = 5;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    // Move downwards (bucket is moving up automatically)
     position = position + Vector2(0, coinSpeed * dt);
     if (position.y > gameRef.size.y + height) {
-      // Coin left the screen, recycle
-      position = Vector2(
-          Random().nextDouble() * (bucket.currentX * 2), -height);
+      position = Vector2(bucket.position.x + Random().nextDouble() * 100 - 50, -height);
     }
 
-    // Check collection
-    final bucketBox = bucketHitbox();
-    if (bucketBox.overlaps(Rect.fromLTWH(position.x, position.y, size.x, size.y))) {
-      final coinValue = _calculateCoinValue();
-      bucket.collectCoin(coinValue);
-      removeFromParent(); // coin disappears after collection
-    }
-  }
-
-  int _calculateCoinValue() {
-    // $coinValue = capacity * depth$  (inline formula)
-    final depth = bucket.ropeLength;
-    final cap = bucket.capacity;
-    final value = cap * depth;
-    return value;
-  }
-
-  Rect bucketHitbox() {
-    return Rect.fromLTWH(
+    // Interaction with bucket
+    final bucketBox = Rect.fromLTWH(
         bucket.position.x, bucket.position.y, bucket.size.x, bucket.size.y);
+    if (bucketBox.overlaps(Rect.fromLTWH(position.x, position.y, size.x, size.y))) {
+      final coinValue = bucket.computeCoinValue(); // $capacity * ropeLength$
+      bucket.collectCoin(coinValue);
+      // Play collect particles here as well
+      add(ParticleEffect(
+        particles: List<Particle>.generating(6, (_) {
+          return Particle.withTextures(
+            texture: await Sprite.load('assets/particle.png'),
+            position: Vector2(0, 0),
+            velocity: Vector2((Random().nextDouble() - 0.5) * 150,
+                               (Random().nextDouble() - 0.5) * 150),
+            color: Colors.amber,
+            size: 6,
+          );
+        }),
+        duration: 0.5,
+      ));
+      removeFromParent();
+    }
   }
 }
