@@ -1,8 +1,8 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'utils/upgrades.dart';
+import '../utils/upgrades.dart';
 
-class HUDComponent extends PositionedComponent {
+class HUDComponent extends PositionComponent {
   final UpgradeManager upgradeManager;
   late TextComponent _coinsText;
   int _globalCoins = 0;
@@ -12,98 +12,108 @@ class HUDComponent extends PositionedComponent {
   HUDComponent({required this.upgradeManager});
 
   @override
-  void onLoad() {
-    // Background panel (placeholder)
-    final panel = SpriteComponent(
-      sprite: Sprite(SolidColor(color: Colors.black45)),
+  Future<void> onLoad() async {
+    // Background panel
+    final panel = RectangleComponent(
       size: Vector2(220, 140),
+      paint: Paint()..color = Colors.black45,
     );
     add(panel);
 
     // Coins counter
     _coinsText = TextComponent(
       text: 'Coins: 0',
-      style: TextStyle(
-        fontSize: 22,
-        color: Colors.yellowAccent,
-        fontWeight: FontWeight.bold,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          fontSize: 22,
+          color: Colors.yellowAccent,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
-    position = Vector2(12, 12);
+    _coinsText.position = Vector2(12, 12);
     add(_coinsText);
+
+    // Upgrade buttons will be added as separate components
+    add(UpgradeButton(
+      type: 'capacity',
+      upgradeManager: upgradeManager,
+      position: Vector2(10, 60),
+    ));
+    add(UpgradeButton(
+      type: 'rope',
+      upgradeManager: upgradeManager,
+      position: Vector2(10, 100),
+    ));
   }
 
   void updateScore({required int runCoins}) {
     _globalCoins += runCoins;
-    // Persist immediately (or call saveLater from GameScene)
-    // For demo we just update UI
     _coinsText.text = 'Coins: $_globalCoins';
   }
+}
 
-  // ------------ Upgrade UI ----------
-  void showUpgradeButton(String type) {
-    final btn = PositionedComponent(
-      left: 10,
-      bottom: 10,
-      child: GestureDetector(
-        onTap: () async {
-          if (_lastUpgrade == type && 
-              DateTime.now().difference(_lastUpgradeTime).inSeconds <
-                  const Duration(seconds: 2)) {
-            // Cool‑down still active → ignore tap
-            return;
-          }
-          _lastUpgrade = type;
-          _lastUpgradeTime = DateTime.now();
+class UpgradeButton extends PositionComponent with TapCallbacks {
+  final String type;
+  final UpgradeManager upgradeManager;
+  static DateTime? _lastTapTime;
+  static const _cooldownSeconds = 2;
 
-          if (type == 'capacity') {
-            upgradeManager.upgradeCapacity();
-          } else {
-            upgradeManager.upgradeRope();
-          }
-          // Refresh UI after upgrade attempt
-          _refreshCoinsDisplay();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.deepOrangeAccent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white70, width: 2),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                type == 'capacity' ? Icons.grain : Icons.swimming_pool,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                type == 'capacity'
-                    ? 'Upgrade Capacity (+5)'
-                    : 'Upgrade Rope (+5)',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+  UpgradeButton({
+    required this.type,
+    required this.upgradeManager,
+    required Vector2 position,
+  }) : super(
+          position: position,
+          size: Vector2(180, 32),
+        );
+
+  @override
+  Future<void> onLoad() async {
+    // Button background
+    add(RectangleComponent(
+      size: size,
+      paint: Paint()..color = Colors.deepOrangeAccent,
+    ));
+
+    // Button text
+    add(TextComponent(
+      text: type == 'capacity' ? 'Upgrade Capacity (+5)' : 'Upgrade Rope (+5)',
+      position: Vector2(8, 6),
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
         ),
       ),
-    );
-    add(btn);
+    ));
   }
 
-  // Simple visual cue when upgrade button is pressed (scale pulse)
-  void _upgradeVisualCue() {
-    // This method could be called from the bucket after successful upgrade
-    // Example: flash the HUD background briefly
-    debugPrint('Upgrade visual cue triggered');
+  @override
+  void onTapDown(TapDownEvent event) {
+    final now = DateTime.now();
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!).inSeconds < _cooldownSeconds) {
+      // Cooldown active
+      return;
+    }
+    _lastTapTime = now;
+
+    if (type == 'capacity') {
+      upgradeManager.upgradeCapacity();
+    } else {
+      upgradeManager.upgradeRope();
+    }
   }
 
-  void _refreshCoinsDisplay() {
-    _coinsText.text = 'Coins: $_globalCoins';
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    // Draw border
+    final borderPaint = Paint()
+      ..color = Colors.white70
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawRect(size.toRect(), borderPaint);
   }
 }

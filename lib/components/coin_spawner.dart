@@ -1,53 +1,77 @@
 import 'package:flame/components.dart';
 import 'bucket.dart';
 import 'dart:math';
-import '../components/particle_effects.dart';
+import 'particle_effects.dart';
+import 'package:flutter/material.dart';
 
-class CoinSpawner extends PositionedComponent {
+class CoinSpawner extends Component with HasGameRef {
   final BucketComponent bucket;
   static const double coinSize = 32;
   static const double coinSpeed = 100;
+  double _spawnTimer = 0;
+  static const double _spawnInterval = 1.5; // Spawn every 1.5 seconds
+
+  final List<Coin> _coins = [];
 
   CoinSpawner({required this.bucket});
 
   @override
-  Future<void> onLoad() async {
-    sprite = await Sprite.load('assets/coin.png');
-    size = Vector2(coinSize, coinSize);
-    // Random spawn horizontally; for demo we just use bucket.x +/- 50
-    position = Vector2(bucket.position.x + Random().nextDouble() * 100 - 50, -height);
-    priority = 5;
-  }
-
-  @override
   void update(double dt) {
     super.update(dt);
-    position = position + Vector2(0, coinSpeed * dt);
-    if (position.y > gameRef.size.y + height) {
-      position = Vector2(bucket.position.x + Random().nextDouble() * 100 - 50, -height);
+
+    _spawnTimer += dt;
+    if (_spawnTimer >= _spawnInterval) {
+      _spawnTimer = 0;
+      _spawnCoin();
     }
 
-    // Interaction with bucket
-    final bucketBox = Rect.fromLTWH(
-        bucket.position.x, bucket.position.y, bucket.size.x, bucket.size.y);
-    if (bucketBox.overlaps(Rect.fromLTWH(position.x, position.y, size.x, size.y))) {
-      final coinValue = bucket.computeCoinValue(); // $capacity * ropeLength$
-      bucket.collectCoin(coinValue);
-      // Play collect particles here as well
-      add(ParticleEffect(
-        particles: List<Particle>.generating(6, (_) {
-          return Particle.withTextures(
-            texture: await Sprite.load('assets/particle.png'),
-            position: Vector2(0, 0),
-            velocity: Vector2((Random().nextDouble() - 0.5) * 150,
-                               (Random().nextDouble() - 0.5) * 150),
-            color: Colors.amber,
-            size: 6,
-          );
-        }),
-        duration: 0.5,
-      ));
-      removeFromParent();
+    // Update coins
+    for (final coin in List<Coin>.from(_coins)) {
+      coin.position.y += coinSpeed * dt;
+
+      // Reset if off screen
+      if (coin.position.y > gameRef.size.y + coin.size.y) {
+        coin.position.y = -coin.size.y;
+        coin.position.x = bucket.position.x + Random().nextDouble() * 100 - 50;
+      }
+
+      // Collision with bucket
+      if (coin.toRect().overlaps(bucket.toRect())) {
+        final coinValue = bucket.computeCoinValue();
+        bucket.collectCoin(coinValue);
+
+        // Play collect particles
+        final effect = ParticleEffect(
+          particleCount: 6,
+          color: Colors.amber,
+          duration: 0.5,
+        );
+        effect.position = coin.position.clone();
+        gameRef.add(effect);
+
+        // Reset coin
+        coin.position.y = -coin.size.y;
+        coin.position.x = bucket.position.x + Random().nextDouble() * 100 - 50;
+      }
     }
+  }
+
+  void _spawnCoin() {
+    final coin = Coin();
+    coin.position = Vector2(
+      bucket.position.x + Random().nextDouble() * 100 - 50,
+      -coin.size.y,
+    );
+    _coins.add(coin);
+    add(coin);
+  }
+}
+
+class Coin extends SpriteComponent with HasGameRef {
+  Coin() : super(size: Vector2(CoinSpawner.coinSize, CoinSpawner.coinSize), priority: 5);
+
+  @override
+  Future<void> onLoad() async {
+    sprite = await Sprite.load('coin.png');
   }
 }

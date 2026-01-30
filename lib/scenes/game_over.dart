@@ -1,29 +1,26 @@
-// `lib/scenes/game_over.dart`
 import 'package:flutter/material.dart';
-import 'package:flame/components.dart';
-import 'package:flame/flame.dart';
-import 'package:wish_well_i/utils/persistence.dart';
+import '../scenes/game_scene.dart';
 
-/// A simple overlay that appears when the player runs out of lives / rope.
-class GameOver extends StatelessWidget {
+class GameOverScreen extends StatelessWidget {
+  final GameScene gameScene;
   final double finalScore;
 
-  const GameOver({
-    Key? key,
+  const GameOverScreen({
+    super.key,
+    required this.gameScene,
     required this.finalScore,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Center everything on the screen.
     return Scaffold(
       backgroundColor: Colors.black54,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 🎉 Big title
-            Text(
+            // Big title
+            const Text(
               'Game Over',
               style: TextStyle(
                 fontSize: 48,
@@ -36,36 +33,21 @@ class GameOver extends StatelessWidget {
             // Final score
             Text(
               'Score: ${finalScore.toStringAsFixed(0)}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 32,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 40),
 
-            // Best‑score badge
-            StreamBuilder<double>(
-              stream: ScoreStorage.bestScoreStream,
-              builder: (_, snapshot) {
-                final best = snapshot.data ?? 0;
-                return Text(
-                  'Best Score: ${best.toInt().toString()}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.lightBlueAccent,
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 30),
-
             // Retry button
             ElevatedButton.icon(
-              onPressed: _onRetry,
+              onPressed: () => gameScene.resetGame(),
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                primary: Colors.greenAccent,
+                backgroundColor: Colors.greenAccent,
+                foregroundColor: Colors.black,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 textStyle: const TextStyle(fontSize: 18),
@@ -75,24 +57,16 @@ class GameOver extends StatelessWidget {
 
             // Quit button
             TextButton.icon(
-              onPressed: _onQuit,
-              icon: const Icon(Icons.exit_to_app),
-              label: const Text('Quit'),
-              style: TextStyle(color: Colors.grey[200]),
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.exit_to_app, color: Colors.white70),
+              label: const Text(
+                'Quit',
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  void _onRetry() {
-    // Reload the current game scene (Flame helper)
-    FlameGame.instance.resetGame();
-  }
-
-  void _onQuit() {
-    // Close the Flutter application
-    FlameGame.instance.exit();
   }
 }

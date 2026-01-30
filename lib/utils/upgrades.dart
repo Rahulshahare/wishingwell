@@ -1,4 +1,5 @@
-import 'utils/persistence.dart';
+import 'persistence.dart';
+import 'package:flutter/foundation.dart';
 
 /// Central manager that handles coin spending, upgrade logic, and persistence.
 class UpgradeManager {
