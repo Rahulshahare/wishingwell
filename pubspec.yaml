@@ -1,0 +1,20 @@
+name: wish_well_i
+description: Arcade mining‑collector game.
+publish_to: "none"
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.14.0            # game engine
+  flutter_svg: ^2.0.7        # optional for SVG assets
+  double_anchor: ^1.0.0      # simple physics helpers (optional)
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/background.png
+    - assets/bucket.jpg
+    - assets/rock.png
+    - assets/coin.png
