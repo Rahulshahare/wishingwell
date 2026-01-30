@@ -160,13 +160,13 @@ class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection 
 
     if (isDescending) {
       depth += 180 * dt;
-      parallax.baseVelocity.y = 180; // sync parallax with descent
+      parallax.parallax.baseVelocity.y = 180; // sync parallax with descent
       if (depth >= maxDepth) {
         isDescending = false;
       }
     } else {
       depth -= 250 * dt; // faster ascent
-      parallax.baseVelocity.y = -250;
+      parallax.parallax.baseVelocity.y = -250;
       if (depth <= 0) {
         _finishRun(success: true);
       }
@@ -262,7 +262,8 @@ class GoldCoin extends Collectible {
   }
 
   void showCollectEffect(WishingWellGame game) {
-    final particle = Particle.generate(
+    final random = Random();
+    final particle = ParticleSystemComponent.generate(
       count: 18,
       lifespan: 0.8,
       generator: (i) => AcceleratedParticle(
@@ -270,18 +271,13 @@ class GoldCoin extends Collectible {
         acceleration: Vector2(0, 400),
         position: Vector2.zero(),
         child: CircleParticle(
-          radius: 4 + random.nextDouble() * 5,
+          radius: 4.0 + random.nextDouble() * 5,
           paint: Paint()..color = Colors.yellow.withOpacity(0.9),
         ),
       ),
     );
-
-    game.add(
-      ParticleSystemComponent(
-        particle: particle,
-        position: position.clone(),
-      ),
-    );
+    particle.position = position.clone();
+    game.add(particle);
   }
 }
 
