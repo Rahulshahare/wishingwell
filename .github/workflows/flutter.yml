@@ -1,98 +1,98 @@
-# `.github/workflows/flutter.yml`
-name: Flutter CI / Build
+# # `.github/workflows/flutter.yml`
+# name: Flutter CI / Build
 
-on:
-  push:
-    branches: [ main ]      # adjust to match your default branches
-  pull_request:
-    branches: [ main, develop ]
+# on:
+#   push:
+#     branches: [ main ]      # adjust to match your default branches
+#   pull_request:
+#     branches: [ main, develop ]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: ${{ github.workspace }}
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         shell: bash
+#         working-directory: ${{ github.workspace }}
 
-    steps:
-      # --------------------------------------------------------------
-      # 1️⃣ Checkout the repo
-      # --------------------------------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#     steps:
+#       # --------------------------------------------------------------
+#       # 1️⃣ Checkout the repo
+#       # --------------------------------------------------------------
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      # --------------------------------------------------------------
-      # 2️⃣ Cache Flutter SDK (speed‑up subsequent runs)
-      # --------------------------------------------------------------
-      - name: Cache Flutter SDK
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.tool_cache }}/flutter
-          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/.gitattributes') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
+#       # --------------------------------------------------------------
+#       # 2️⃣ Cache Flutter SDK (speed‑up subsequent runs)
+#       # --------------------------------------------------------------
+#       - name: Cache Flutter SDK
+#         uses: actions/cache@v4
+#         with:
+#           path: ${{ runner.tool_cache }}/flutter
+#           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/.gitattributes') }}
+#           restore-keys: |
+#             ${{ runner.os }}-flutter-
 
-      # --------------------------------------------------------------
-      # 3️⃣ Install Flutter (use a specific stable channel version)
-      # --------------------------------------------------------------
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: '3.24.0'          # <-- update as needed
-          cache: true
+#       # --------------------------------------------------------------
+#       # 3️⃣ Install Flutter (use a specific stable channel version)
+#       # --------------------------------------------------------------
+#       - name: Install Flutter
+#         uses: subosito/flutter-action@v2
+#         with:
+#           channel: stable
+#           flutter-version: '3.24.0'          # <-- update as needed
+#           cache: true
 
-      # --------------------------------------------------------------
-      # 4️⃣ Restore cached pub packages
-      # --------------------------------------------------------------
-      - name: Cache Dart/Flutter packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            ${{ runner.workspace }}/.dart_tool
-            ${{ runner.workspace }}/build
-          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
+#       # --------------------------------------------------------------
+#       # 4️⃣ Restore cached pub packages
+#       # --------------------------------------------------------------
+#       - name: Cache Dart/Flutter packages
+#         uses: actions/cache@v4
+#         with:
+#           path: |
+#             ~/.pub-cache
+#             ${{ runner.workspace }}/.dart_tool
+#             ${{ runner.workspace }}/build
+#           key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.yaml') }}
+#           restore-keys: |
+#             ${{ runner.os }}-pub-
 
-      # --------------------------------------------------------------
-      # 5️⃣ Get Flutter dependencies
-      # --------------------------------------------------------------
-      - name: Install dependencies
-        run: flutter pub get
+#       # --------------------------------------------------------------
+#       # 5️⃣ Get Flutter dependencies
+#       # --------------------------------------------------------------
+#       - name: Install dependencies
+#         run: flutter pub get
 
-      # --------------------------------------------------------------
-      # 6️⃣ Run static analysis
-      # --------------------------------------------------------------
-      - name: Run analyzer
-        run: flutter analyze
+#       # --------------------------------------------------------------
+#       # 6️⃣ Run static analysis
+#       # --------------------------------------------------------------
+#       - name: Run analyzer
+#         run: flutter analyze
 
-      # --------------------------------------------------------------
-      # 7️⃣ Run unit / widget tests (optional but recommended)
-      # --------------------------------------------------------------
-      - name: Run tests
-        run: flutter test
+#       # --------------------------------------------------------------
+#       # 7️⃣ Run unit / widget tests (optional but recommended)
+#       # --------------------------------------------------------------
+#       - name: Run tests
+#         run: flutter test
 
-      # --------------------------------------------------------------
-      # 8️⃣ Build a **release** Android APK (or App Bundle)
-      # --------------------------------------------------------------
-      - name: Build Android APK
-        run: |
-          flutter build apk --release \
-            --build-number=${{ github.run_number }} \
-            --dart-define=FLAVOR=production
-        # If you prefer an AAB (Google Play ready), replace the line above with:
-        # flutter build appbundle --release
+#       # --------------------------------------------------------------
+#       # 8️⃣ Build a **release** Android APK (or App Bundle)
+#       # --------------------------------------------------------------
+#       - name: Build Android APK
+#         run: |
+#           flutter build apk --release \
+#             --build-number=${{ github.run_number }} \
+#             --dart-define=FLAVOR=production
+#         # If you prefer an AAB (Google Play ready), replace the line above with:
+#         # flutter build appbundle --release
 
-      # --------------------------------------------------------------
-      # 9️⃣ Upload the built artifact (APK / AAB) for download
-      # --------------------------------------------------------------
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wish-well-i-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          # If you built an AAB, change the path to:
-          # path: build/app/outputs/bundle/release/app-release.aab
+#       # --------------------------------------------------------------
+#       # 9️⃣ Upload the built artifact (APK / AAB) for download
+#       # --------------------------------------------------------------
+#       - name: Upload APK artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: wish-well-i-apk
+#           path: build/app/outputs/flutter-apk/app-release.apk
+#           # If you built an AAB, change the path to:
+#           # path: build/app/outputs/bundle/release/app-release.aab
