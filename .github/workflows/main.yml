@@ -1,19 +1,67 @@
-name: Build APK
+name: Flutter CI - Build & Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: '17' }
-      - uses: subosito/flutter-action@v2
-        with: { flutter-version: '3.x' }
-      - run: flutter pub get
-      - run: flutter build apk --release
-      - uses: actions/upload-artifact@v4
+      # 1. Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Java (required for Android build)
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          name: app-release.apk
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Set up Flutter (stable channel, caches pub)
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'          # or 'stable' / specific like '3.24.x'
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+
+      # 4. Get dependencies (with caching)
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. Check code formatting & analyze (optional but recommended)
+      - name: Check formatting
+        run: dart format --set-exit-if-changed lib test
+
+      - name: Analyze code
+        run: flutter analyze
+
+      # 6. Run tests (unit + widget tests)
+      - name: Run tests
+        run: flutter test --machine > test-results.json  # --machine for nicer output
+
+      # 7. Build release APK
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      # 8. Upload the generated APK as artifact
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wishing-well-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+
+      # Optional: Upload test results (for visibility)
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.json
