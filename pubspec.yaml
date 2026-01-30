@@ -10,6 +10,8 @@ dependencies:
   flame: ^1.14.0            # game engine
   flutter_svg: ^2.0.7        # optional for SVG assets
   anchor: ^0.0.7     # simple physics helpers (optional)
+dependency_overrides:
+  meta: 1.15.0
 
 flutter:
   uses-material-design: true
