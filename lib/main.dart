@@ -4,6 +4,8 @@ import 'package:flame/game.dart';
 import 'package:flame/geometry.dart';
 import 'package:flame/particles.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flame/collisions.dart';
+import 'package:flame/parallax.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
