@@ -113,32 +113,20 @@ class WishingWellGame extends FlameGame with PanDetector, HasCollisionDetection 
     FlameAudio.bgm.play('bg_music.mp3', volume: 0.4);
 
     // Load parallax background (cave layers)
-    // Load parallax background (cave layers) - modern Flame way
-    final layers = <ParallaxLayer>[];
-
-    for (final imagePath in [
-      'cave_layer1.png',
-      'cave_layer2.png',
-      'cave_layer3.png',
-    ]) {
-      final image = await images.load(imagePath);
-      layers.add(
-        ParallaxLayer(
-          ParallaxImage(image),
-          velocityMultiplier: Vector2(1.0, 1.0 + (layers.length * 0.5)), // slower front → faster back
-          repeat: ImageRepeat.repeatX,
-          alignment: Alignment.topLeft,
-          // fill: LayerFill.none,  // optional - comment if not needed
-        ),
-      );
-    }
-
-    parallax = ParallaxComponent(
-      layers,
-      baseVelocity: Vector2(0, 30),           // downward scroll
-      size: size,
+    parallax = await loadParallaxComponent(
+    [
+      ParallaxImageData('cave_layer1.png'),
+      ParallaxImageData('cave_layer2.png'),
+      ParallaxImageData('cave_layer3.png'),
+    ],
+    baseVelocity: Vector2(0, 30),
+    velocityMultiplierDelta: Vector2(1.2, 1.5),
+    repeat: ImageRepeat.repeatX,
+    alignment: Alignment.topLeft,
+    size: size,
     );
     add(parallax);
+
     // Bucket
     bucket = Bucket(position: Vector2(size.x / 2, 120));
     add(bucket);
